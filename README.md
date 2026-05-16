@@ -44,7 +44,10 @@ The final pipeline achieves sub-3 degree accuracy, evaluated rigorously across a
 
 ## 5. How to Reproduce
 To retrain the models and run the full 5-fold cross-validation audit:
+
+
 ```bash
+pip install -r requirements.txt
 chmod +x reproduce.sh
 bash reproduce.sh
 ```
@@ -67,4 +70,4 @@ streamlit run app.py
 AI coding assistants were used throughout development for:
 Code scaffolding: Boilerplate for YOLO training loops, data preparation, and Streamlit UI.
 Documentation: Drafting LaTeX report structure and markdown documentation.
-All technical decisions (pipeline architecture, the SAM + PCA moments approach, the ResNet-SVM flip resolution strategy) and the written analysis are my own.
+All technical decisions (pipeline architecture, the SAM + PCA moments approach, the ResNet-SVM flip resolution strategy etc.) and the written analysis are my own.
