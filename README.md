@@ -13,6 +13,9 @@ I approached the problem statement by breaking down the requirements for a succe
 Hence, through all my iterations I have tried to refine and obtain better inputs for all of these steps. I started out with just a simple YOLOv8n model, then transitioned to an OBB model to get better bounding boxes. I further refined the bounding boxes with MobileSAM to get even more tighter and precise cutouts for better angular prediction. I finally settled on SAM box prompting based on a YOLO11s-Pose model, which gave the tightest and most accurate cutouts for the required region, giving the best MAE in my experiments. 
 
 For flip differences, I first tried an SVM-based classifier trained using the ResNet features of tabs and joints to differentiate between them and orient the PCA axis mathematically accordingly. But finally, I settled on using the pose-estimated angle as a proxy along with the PCA to get the final angle. This has basically been my approach and technical evolution of the approaches tried, and my rationale for doing so. Hope you enjoy going through my work, just as much I enjoyed experimenting and working on it!
+> [!NOTE]
+> Please find the detailed report with my analysis on the pipeline used, benchmarks, metrics etc. in the [report](./report.pdf) in this repository.
+
 
 ## 2. Performance Metrics (5-Fold CV)
 
