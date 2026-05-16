@@ -33,11 +33,10 @@ pip install -r requirements.txt
 chmod +x reproduce.sh
 ./reproduce.sh
 ```
-*Note: The YOLOv26 step trains 5 models for 100 epochs each. A CUDA GPU is highly recommended.*
+*Note: The YOLOv8 step trains 5 models for 100 epochs each. A CUDA GPU is highly recommended.*
 
 To run with pre-trained weights only:
 ```bash
-./download_models.sh
 python scripts/run_sam_eval.py
 ```
 
