@@ -118,6 +118,9 @@ for fr in fold_results:
 
 # --- Aggregate Results ---
 errors = np.array(angle_errors)
+os.makedirs('outputs', exist_ok=True)
+np.save('outputs/baseline_errors.npy', errors)
+
 mean_err = np.mean(errors)
 median_err = np.median(errors)
 

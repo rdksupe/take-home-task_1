@@ -1,109 +1,60 @@
 # Tube Detection & Orientation Pipeline
 
-## 1.  Overview
+## 1. Introduction
 
-I approached the take-home using a multi-stage pipeline, achieving a **4.59° Mean Angle Error** with **100% Precision and 100% Recall** across all 371 ground-truth tubes. 
+I approached the problem statement by breaking down the requirements for a successful orientation of a given overhead image into 5 logical steps:
 
-## 2. Pipeline Architecture
-1. **Detection (YOLOv8 OBB):** Detects tubes and outputs Oriented Bounding Boxes, eliminating background noise. YOLOv8 is chosen over YOLOv26 for 100% recall (see report for trade-off analysis).
-2. **Sub-Pixel Masking (MobileSAM):** Uses the YOLO box as a prompt to segment a pixel-perfect binary mask of the transparent plastic.
-3. **Axis Calculation (OpenCV Moments):** Calculates the PCA major axis of the SAM mask, giving a mathematically precise angle in [0, 180°).
-4. **Symmetry Resolution (ResNet-18 + SVM):** Extracts patches from both ends of the axis and classifies them to resolve the 180° front/back ambiguity.
+*   **Step 1:** How do we locate the tubes?
+*   **Step 2:** We have located the tubes, now how do we center and focus on exactly the cross section of the tube most relevant to us?
+*   **Step 3:** How do we use this cutout to find the orientation of the said tube?
+*   **Step 4:** How can we refine the cutout to further improve the results from step 3?
+*   **Step 5:** Are we pointing in the right direction tho? How do we make sure we are not pointing towards the lid joint instead of pointing correctly towards the lid tab?
 
-> **📄 For detailed methodology, mathematical derivations, failure analysis, and comprehensive evaluation, please refer to the included [`report.pdf`](./report.pdf).**
+Hence, through all my iterations I have tried to refine and obtain better inputs for all of these steps. I started out with just a simple YOLOv8n model, then transitioned to an OBB model to get better bounding boxes. I further refined the bounding boxes with MobileSAM to get even more tighter and precise cutouts for better angular prediction. I finally settled on SAM box prompting based on a YOLO11s-Pose model, which gave the tightest and most accurate cutouts for the required region, giving the best MAE in my experiments. 
+
+For flip differences, I first tried an SVM-based classifier trained using the ResNet features of tabs and joints to differentiate between them and orient the PCA axis mathematically accordingly. But finally, I settled on using the pose-estimated angle as a proxy along with the PCA to get the final angle. This has basically been my approach and technical evolution of the approaches tried, and my rationale for doing so. Hope you enjoy going through my work, just as much I enjoyed experimenting and working on it!
+
+## 2. Performance Metrics (5-Fold CV)
+
+The final pipeline achieves sub-3 degree accuracy, evaluated rigorously across all 371 ground-truth tubes using 5-Fold Cross-Validation.
+
+| Metric | Value |
+| :--- | :--- |
+| **Mean Angle Error (MAE)** | **2.86°** |
+| **Median Angle Error** | **2.14°** |
+| **Accuracy < 5°** | **84.6%** |
+| **Accuracy < 10°** | **97.0%** |
+| **Flip Failures** | **0.00%** |
+| **Precision / Recall** | **100% / 100%** |
 
 ## 3. Directory Structure
 ```
 .
-├── app.py                   # Streamlit visualization application
+├── app.py                   # Comparative evaluation dashboard
 ├── reproduce.sh             # End-to-end reproduction script
+├── report.tex               # Technical methodology report
 ├── annotations.csv          # Ground truth data
-├── images/                  # Raw RGB images (640x480)
-├── models/                  # Pre-trained model weights (see download_models.sh)
-├── documentation/           # Scaling laws, math explanations, and analysis
-├── scripts/                 # Training, data prep, and evaluation scripts
+├── models/                  # Model weights (YOLO11-Pose & MobileSAM)
+├── scripts/                 # Training and evaluation scripts
 └── utils/                   # Shared utility modules
 ```
 
-## 4. How to Reproduce
-To reproduce the full pipeline from scratch (dataset generation, YOLO training, SVM training, evaluation):
-
+## 5. How to Reproduce
+To retrain the models and run the full 5-fold cross-validation audit:
 ```bash
-pip install -r requirements.txt
 chmod +x reproduce.sh
-./reproduce.sh
-```
-*Note: The YOLOv8 step trains 5 models for 100 epochs each. A CUDA GPU is highly recommended.*
-
-To run with pre-trained weights only:
-```bash
-python scripts/run_sam_eval.py
+bash reproduce.sh
 ```
 
-## 5. Results (5-Fold Cross-Validation)
-
-### Per-Fold Breakdown
-
-| Fold | TPs | FPs | GT  | Recall | MAE    | Median | < 10°   |
-|------|-----|-----|-----|--------|--------|--------|---------|
-| 0    | 76  | 0   | 76  | 1.0000 | 4.78°  | 2.95°  | 89.47%  |
-| 1    | 73  | 0   | 73  | 1.0000 | 3.72°  | 2.15°  | 91.78%  |
-| 2    | 78  | 0   | 78  | 1.0000 | 4.33°  | 2.62°  | 88.46%  |
-| 3    | 67  | 0   | 67  | 1.0000 | 5.36°  | 3.00°  | 86.57%  |
-| 4    | 77  | 0   | 77  | 1.0000 | 4.84°  | 2.55°  | 80.52%  |
-
-### Aggregate Results (371 GT Tubes)
-
-| Metric              | Value              |
-|---------------------|--------------------|
-| Matched TPs         | 371                |
-| False Positives     | 0                  |
-| Undetected          | 0                  |
-| **Precision**       | **1.0000**         |
-| **Recall**          | **1.0000 (371/371)** |
-| **F1 Score**        | **1.0000**         |
-
-### Orientation Accuracy
-
-| Metric                | Value     |
-|-----------------------|-----------|
-| **Mean Angle Error**  | **4.59°** |
-| **Median Angle Error**| **2.75°** |
-| Errors < 5°           | 73.05%    |
-| Errors < 10°          | 87.33%    |
-| Errors < 22°          | 96.77%    |
-| Flip Failures (≥ 90°) | 0.00%    |
-
-<details>
-<summary>Error Distribution Breakdown</summary>
-
-| Bucket    | Percentage |
-|-----------|------------|
-| 0° – 1°  | 19.68%     |
-| 1° – 2°  | 20.49%     |
-| 2° – 3°  | 13.48%     |
-| 3° – 4°  | 10.78%     |
-| 4° – 5°  | 8.63%      |
-
-</details>
-
-## 6. Visualizing the Results
-A Streamlit dashboard lets you visually inspect the pipeline predictions against ground truth:
-
+To run the comparative audit dashboard:
 ```bash
 streamlit run app.py
 ```
 
+## 6. Pipeline in Action
 
-## 7. Pipeline in Action
+![Pipeline Progress](outputs/collage_montage.gif)
 
-The collage below shows 8 random images progressing simultaneously through the full pipeline — from raw detection to final oriented output:
+## 7. Final Predictions
 
-![Pipeline Collage](./outputs/collage_montage.gif)
-
-## 8. Use of AI Tools
-AI coding assistants were used throughout development for:
-- **Code scaffolding:** Boilerplate for YOLO training loops, data preparation, and Streamlit UI.
-- **Documentation:** Drafting LaTeX report structure and markdown documentation.
-
-All technical decisions (pipeline architecture, the SAM + PCA moments approach, the ResNet-SVM flip resolution strategy) and the written analysis are my own.
+![Final Predictions](outputs/final_predictions.png)
