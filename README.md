@@ -61,3 +61,10 @@ streamlit run app.py
 ## 7. Final Predictions
 
 ![Final Predictions](outputs/final_predictions.png)
+
+## 8. AI Usage 
+
+AI coding assistants were used throughout development for:
+Code scaffolding: Boilerplate for YOLO training loops, data preparation, and Streamlit UI.
+Documentation: Drafting LaTeX report structure and markdown documentation.
+All technical decisions (pipeline architecture, the SAM + PCA moments approach, the ResNet-SVM flip resolution strategy) and the written analysis are my own.
