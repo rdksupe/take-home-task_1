@@ -17,7 +17,20 @@ For flip differences, I first tried an SVM-based classifier trained using the Re
 > [!NOTE]
 > Please find the detailed report with my analysis on the pipeline used, benchmarks, metrics etc. in the [report](./report.pdf) in this repository.
 
-## 2. Performance Metrics (5-Fold CV)
+## 2. Final Pipeline Architecture
+
+```mermaid
+graph TD
+    A[Raw Image] --> B[YOLO11s-Pose]
+    B -->|Tight Bounding Box| C[MobileSAM]
+    B -->|Lever-Arm Keypoints| F[Pose Compass]
+    C -->|Pixel-Perfect Mask| D[OpenCV PCA Moments]
+    D -->|Unflipped Geometric Axis| G[Symmetry Resolution]
+    F -->|Directional Proxy Vector| G
+    G --> H[Final 360° Orientation]
+```
+
+## 3. Performance Metrics (5-Fold CV)
 
 The final pipeline achieves sub-3 degree accuracy, evaluated rigorously across all 371 ground-truth tubes using 5-Fold Cross-Validation.
 
@@ -42,7 +55,7 @@ To ensure the 2.86° result is stable and not dominated by an easy split, here i
 | **Fold 3** | 67 | 0 | 100% | 2.78° | 86.57% |
 | **Fold 4** | 77 | 0 | 100% | 2.70° | 85.71% |
 
-## 3. Directory Structure
+## 4. Directory Structure
 ```
 .
 ├── app.py                   # Comparative evaluation dashboard
@@ -81,4 +94,4 @@ streamlit run app.py
 AI coding assistants were used throughout development for:
 Code scaffolding: Boilerplate for YOLO training loops, data preparation, and Streamlit UI.
 Documentation: Drafting LaTeX report structure and markdown documentation.
-All technical decisions (pipeline architecture, the SAM + PCA moments approach, the ResNet-SVM flip resolution strategy etc.) and the written analysis are my own.
+All technical decisions (pipeline architecture, the SAM + PCA moments approach, the ResNet-SVM flip resolution strategy) and the written analysis are my own.
