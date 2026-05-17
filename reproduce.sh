@@ -10,9 +10,6 @@ echo " [1/5] Preparing Datasets (5-Fold CV)..."
 python scripts/prepare_obb_data.py
 python scripts/prepare_pose_data.py
 
-echo " [2/5] Training YOLO11s-Pose Models (100 Epochs x 5 Folds)..."
-# Optional: Uncomment to fully retrain from scratch
-# python scripts/train_pose_model.py
 echo "   (Skipping full retrain. Using provided weights for evaluation.)"
 
 echo " [3/5] Benchmarking Baseline Logic (SAM-PCA + SVM)..."
